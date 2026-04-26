@@ -1,0 +1,43 @@
+{
+  "tests": [
+    {
+      "name": "Register new user",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {
+        "username": "testgamer99",
+        "email": "testgamer99@example.com",
+        "password": "secret123",
+        "display_name": "TestGamer",
+        "avatar_emoji": "🎮"
+      },
+      "expectedStatus": 200,
+      "expectedBody": { "success": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login with correct creds",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {
+        "login": "testgamer99",
+        "password": "secret123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": { "success": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login with wrong password",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {
+        "login": "testgamer99",
+        "password": "wrongpass"
+      },
+      "expectedStatus": 401,
+      "expectedBody": { "error": "Неверный логин или пароль" },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

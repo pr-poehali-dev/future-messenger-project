@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import { User, logout, updateProfile } from "@/lib/auth";
 
 // Types
 type Tab = "chats" | "channels" | "contacts" | "games" | "stories";
@@ -87,7 +88,13 @@ const statusLabel = (s: string) => {
   return "оффлайн";
 };
 
-export default function Index() {
+interface IndexProps {
+  currentUser: User;
+  onLogout: () => void;
+}
+
+export default function Index({ currentUser, onLogout }: IndexProps) {
+  const [me, setMe] = useState<User>(currentUser);
   const [activeTab, setActiveTab] = useState<Tab>("chats");
   const [activeChat, setActiveChat] = useState<Contact | null>(contacts[0]);
   const [msgInput, setMsgInput] = useState("");
@@ -183,7 +190,7 @@ export default function Index() {
           style={{ background: rightPanel === "profile" ? "rgba(168,85,247,0.25)" : "rgba(255,255,255,0.05)" }}
           title="Мой профиль"
         >
-          🚀
+          {me.avatar_emoji}
         </button>
         <button
           onClick={() => setRightPanel(rightPanel === "settings" ? null : "settings")}
@@ -192,6 +199,14 @@ export default function Index() {
           title="Настройки"
         >
           <Icon name="Settings" size={18} />
+        </button>
+        <button
+          onClick={() => { logout(); onLogout(); }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/15"
+          style={{ color: "#6b7280" }}
+          title="Выйти"
+        >
+          <Icon name="LogOut" size={16} />
         </button>
       </div>
 
@@ -519,13 +534,14 @@ export default function Index() {
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl animate-float"
                     style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(34,211,238,0.2))", border: "2px solid rgba(168,85,247,0.5)", boxShadow: "0 0 20px rgba(168,85,247,0.3)" }}>
-                    🚀
+                    {me.avatar_emoji}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center status-online border-2" style={{ borderColor: "var(--dark-panel)" }} />
                 </div>
                 <div className="text-center">
-                  <p className="font-orbitron font-bold" style={{ color: "#e2e8f0" }}>КосмоГеймер</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#a855f7" }}>@cosmo_gamer</p>
+                  <p className="font-orbitron font-bold" style={{ color: "#e2e8f0" }}>{me.display_name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a855f7" }}>@{me.username}</p>
+                  {me.bio && <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>{me.bio}</p>}
                 </div>
                 <div className="flex gap-2">
                   {["🏆", "⚡", "🎯", "💎"].map((b, i) => (
@@ -537,23 +553,23 @@ export default function Index() {
               <div className="game-card p-3">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-semibold" style={{ color: "#9ca3af" }}>Уровень</span>
-                  <span className="font-orbitron font-bold text-sm" style={{ color: "#a855f7" }}>LV.42</span>
+                  <span className="font-orbitron font-bold text-sm" style={{ color: "#a855f7" }}>LV.{me.level}</span>
                 </div>
                 <div className="h-1.5 rounded-full mb-1" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <div className="xp-bar h-1.5" style={{ width: "68%" }} />
+                  <div className="xp-bar h-1.5" style={{ width: `${Math.min(100, (me.xp % 1000) / 10)}%` }} />
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[10px]" style={{ color: "#6b7280" }}>6,800 XP</span>
-                  <span className="text-[10px]" style={{ color: "#6b7280" }}>10,000 XP</span>
+                  <span className="text-[10px]" style={{ color: "#6b7280" }}>{me.xp} XP</span>
+                  <span className="text-[10px]" style={{ color: "#6b7280" }}>{me.level * 1000} XP</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: "Сообщений", value: "12,483", icon: "MessageCircle", color: "#a855f7" },
-                  { label: "Побед", value: "847", icon: "Trophy", color: "#fbbf24" },
-                  { label: "Друзей", value: "156", icon: "Users", color: "#22d3ee" },
-                  { label: "Каналов", value: "23", icon: "Radio", color: "#4ade80" },
+                  { label: "Уровень", value: `${me.level}`, icon: "Zap", color: "#a855f7" },
+                  { label: "XP", value: `${me.xp}`, icon: "Trophy", color: "#fbbf24" },
+                  { label: "Статус", value: me.status === "gaming" ? "Игрок" : "Онлайн", icon: "Users", color: "#22d3ee" },
+                  { label: "Аккаунт", value: "Активен", icon: "Shield", color: "#4ade80" },
                 ].map(s => (
                   <div key={s.label} className="game-card p-3 text-center">
                     <Icon name={s.icon} size={16} style={{ color: s.color, margin: "0 auto 4px" }} />
@@ -565,14 +581,30 @@ export default function Index() {
 
               <div className="game-card p-3 space-y-1">
                 <p className="text-xs font-semibold mb-2" style={{ color: "#9ca3af" }}>Статус</p>
-                {["🎮 В игре", "🟢 Онлайн", "💤 Не беспокоить", "👻 Невидимый"].map((st, i) => (
-                  <button key={i} className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all hover:bg-purple-500/10"
-                    style={{ color: i === 0 ? "#a855f7" : "#9ca3af" }}>
-                    {st}
-                    {i === 0 && <span className="float-right text-xs">✓</span>}
+                {[
+                  { key: "gaming", label: "🎮 В игре" },
+                  { key: "online", label: "🟢 Онлайн" },
+                  { key: "away", label: "💤 Не беспокоить" },
+                  { key: "offline", label: "👻 Невидимый" },
+                ].map(st => (
+                  <button key={st.key}
+                    onClick={() => updateProfile({ status: st.key }).then(u => setMe(u)).catch(() => {})}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all hover:bg-purple-500/10"
+                    style={{ color: me.status === st.key ? "#a855f7" : "#9ca3af" }}>
+                    {st.label}
+                    {me.status === st.key && <span className="float-right text-xs">✓</span>}
                   </button>
                 ))}
               </div>
+
+              <button
+                onClick={() => { logout(); onLogout(); }}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:bg-red-500/20"
+                style={{ border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444" }}
+              >
+                <Icon name="LogOut" size={15} />
+                Выйти из аккаунта
+              </button>
             </div>
           )}
 
