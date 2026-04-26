@@ -13,44 +13,18 @@ import { getCachedUser, getMe, User } from "./lib/auth";
 const queryClient = new QueryClient();
 
 function AuthGate() {
-  const [user, setUser] = useState<User | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [user, setUser] = useState<User | null>(() => getCachedUser());
 
   useEffect(() => {
-    const cached = getCachedUser();
-    if (cached) {
-      setUser(cached);
-      setChecking(false);
-      // Тихо обновляем данные из БД
-      getMe().then(u => { if (u) setUser(u); }).catch(() => {});
-    } else {
-      getMe().then(u => {
-        setUser(u);
-      }).catch(() => {
-        setUser(null);
-      }).finally(() => setChecking(false));
-    }
+    // Тихо обновляем данные из БД если есть кеш
+    getMe().then(u => { if (u) setUser(u); }).catch(() => {});
   }, []);
-
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center grid-bg" style={{ background: "var(--dark-bg)" }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center animate-pulse-neon"
-            style={{ background: "linear-gradient(135deg, #a855f7, #22d3ee)" }}>
-            <span className="font-orbitron font-black text-white text-xl">N</span>
-          </div>
-          <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "rgba(168,85,247,0.3)", borderTopColor: "#a855f7" }} />
-        </div>
-      </div>
-    );
-  }
 
   if (!user) {
     return <AuthPage onAuth={setUser} />;
   }
 
-  return <Index currentUser={user} onLogout={() => setUser(null)} />;
+  return <Index currentUser={user} onLogout={() => { setUser(null); }} />;
 }
 
 const App = () => (

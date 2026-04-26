@@ -55,7 +55,6 @@
     @apply bg-background text-foreground;
     font-family: "Rubik", sans-serif;
     background-color: var(--dark-bg);
-    overflow: hidden;
   }
 
   ::-webkit-scrollbar {

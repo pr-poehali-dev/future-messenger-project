@@ -60,7 +60,7 @@ export default function AuthPage({ onAuth }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center grid-bg" style={{ background: "var(--dark-bg)" }}>
+    <div className="min-h-screen flex items-center justify-center grid-bg overflow-y-auto py-6" style={{ background: "var(--dark-bg)" }}>
       {/* Decorative blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl"
